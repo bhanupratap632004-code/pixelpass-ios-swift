@@ -49,7 +49,7 @@ public class PixelPass {
             let base45DecodedData = try data.fromBase45()
             let compressionType: CompressionType =
                 base45DecodedData.starts(with: Constants.compressionHeader) ? .zlib : .brotli
-            let compressor = CompressionFactory.create(type: compressionType)
+            let compressor = try CompressionFactory.create(type: compressionType)
             guard let decompressedData = compressor.decompress(base45DecodedData) else {
                 os_log("Error decompressing data",log: OSLog.default,type: OSLogType.error)
                 return nil
@@ -75,15 +75,13 @@ public class PixelPass {
     }
     
     public func generateQRData(_ input: String,compressionType: CompressionType = .zlib) -> String? {
-        
-        var compressedData: Data
-        let compressor = CompressionFactory.create(type: compressionType)
-        
-        var base45EncodedString: String = ""
-        
-        guard !input.isEmpty else {
-            return nil
-        }
+        do {
+            var compressedData: Data
+            let compressor = try CompressionFactory.create(type: compressionType)
+            var base45EncodedString = ""
+            guard !input.isEmpty else {
+                return nil
+            }
         
         if let jsonDataToVerify = input.data(using: .utf8), let jsonData = try? JSONSerialization.jsonObject(with: jsonDataToVerify) {
             let cborEncodableData = convertToCBOREncodableFormat(input: jsonData)
@@ -106,10 +104,18 @@ public class PixelPass {
 
             compressedData = compressed
         }
-        base45EncodedString = compressedData.toBase45()
-        return base45EncodedString
-    }
+            base45EncodedString = compressedData.toBase45()
+            return base45EncodedString
 
+                } catch {
+                    os_log(
+                        "Unsupported compression type",
+                        log: OSLog.default,
+                        type: .error
+                    )
+                    return nil
+                }
+            }
     public func generateQRImageData(
         qrText: String,
         ecc: ECC = .L

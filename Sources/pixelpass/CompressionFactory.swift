@@ -1,8 +1,12 @@
 import Foundation
 
+enum CompressionError: Error {
+    case unsupportedCompression
+}
+
 class CompressionFactory {
 
-    static func create(type: CompressionType) -> Compression {
+    static func create(type: CompressionType) throws -> Compression {
 
         switch type {
 
@@ -13,7 +17,7 @@ class CompressionFactory {
             if #available(iOS 15.0, *) {
                 return Brotli()
             } else {
-                return Zlib()
+                throw CompressionError.unsupportedCompression
             }
         }
     }
