@@ -64,6 +64,30 @@ class PixelPassTests: XCTestCase {
         XCTAssertNil(pixelPass.generateQRData(emptyInput), "Encoding should return nil for an empty string.")
     }
     
+    func testEncodeAndDecodeCycleWithBrotli() {
+        let inputString = "Hello, this is a Brotli compression test."
+
+        guard let encoded = pixelPass.generateQRData(
+            inputString,
+            compressionType: .brotli
+        ) else {
+            XCTFail("Encoding with Brotli failed.")
+            return
+        }
+
+        guard let decodedData = pixelPass.decode(data: encoded),
+              let decodedString = String(data: decodedData, encoding: .utf8) else {
+            XCTFail("Decoding Brotli payload failed.")
+            return
+        }
+
+        XCTAssertEqual(
+            decodedString,
+            inputString,
+            "Decoded string should match the original input."
+        )
+    }
+    
     func testGenerateQRCode() {
         let inputString = "Test QR Code generation"
         let qrCodeImage = pixelPass.generateQRCode( data: inputString,ecc: ECC.M)

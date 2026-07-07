@@ -47,7 +47,10 @@ public class PixelPass {
     public func decode(data: String) -> Data? {
         do {
             let base45DecodedData = try data.fromBase45()
-            guard let decompressedData = Zlib().decompress(base45DecodedData) else {
+            let compressionType: CompressionType =
+                base45DecodedData.starts(with: Constants.compressionHeader) ? .zlib : .brotli
+            let compressor = CompressionFactory.create(type: compressionType)
+            guard let decompressedData = compressor.decompress(base45DecodedData) else {
                 os_log("Error decompressing data",log: OSLog.default,type: OSLogType.error)
                 return nil
             }
@@ -71,9 +74,11 @@ public class PixelPass {
         }
     }
     
-    public func generateQRData(_ input: String) -> String? {
+    public func generateQRData(_ input: String,compressionType: CompressionType = .zlib) -> String? {
         
         var compressedData: Data
+        let compressor = CompressionFactory.create(type: compressionType)
+        
         var base45EncodedString: String = ""
         
         guard !input.isEmpty else {
@@ -84,24 +89,22 @@ public class PixelPass {
             let cborEncodableData = convertToCBOREncodableFormat(input: jsonData)
             let cborEncodedData = cborEncodableData.encode()
             
-            guard Zlib().compress(data:cborEncodedData,algorithm:COMPRESSION_ZLIB) != nil
-            else {
-                os_log("Error compressing data",log: OSLog.default,type: OSLogType.error)
+            guard let compressed = compressor.compress(data: cborEncodedData) else {
+                os_log("Error compressing data", log: OSLog.default, type: OSLogType.error)
                 return nil
             }
-            
-            compressedData = Zlib().compress(data: cborEncodedData, algorithm:COMPRESSION_ZLIB)!
+
+            compressedData = compressed
             
         } else {
             os_log("Data is not a valid JSON",log: OSLog.default,type: OSLogType.error)
             
-            guard Zlib().compress(data:input,algorithm:COMPRESSION_ZLIB) != nil
-            else {
-                os_log("Error compressing data",log: OSLog.default,type: OSLogType.error)
+            guard let compressed = compressor.compress(data: input) else {
+                os_log("Error compressing data", log: OSLog.default, type: OSLogType.error)
                 return nil
             }
-            
-            compressedData = Zlib().compress(data: input, algorithm:COMPRESSION_ZLIB)!
+
+            compressedData = compressed
         }
         base45EncodedString = compressedData.toBase45()
         return base45EncodedString
