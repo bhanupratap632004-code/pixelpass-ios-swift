@@ -88,6 +88,26 @@ class PixelPassTests: XCTestCase {
         )
     }
     
+    func testDecodeDetectsZlibCompressionUsingHeaderValidation() {
+        let input = "Hello, Zlib detection!"
+
+        guard let encoded = pixelPass.generateQRData(
+            input,
+            compressionType: .zlib
+        ) else {
+            XCTFail("Failed to generate Zlib encoded data.")
+            return
+        }
+
+        guard let decodedData = pixelPass.decode(data: encoded),
+              let decodedString = String(data: decodedData, encoding: .utf8) else {
+            XCTFail("Failed to decode Zlib encoded data.")
+            return
+        }
+
+        XCTAssertEqual(decodedString, input)
+    }
+    
     func testGenerateQRCode() {
         let inputString = "Test QR Code generation"
         let qrCodeImage = pixelPass.generateQRCode( data: inputString,ecc: ECC.M)

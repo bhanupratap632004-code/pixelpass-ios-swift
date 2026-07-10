@@ -43,12 +43,30 @@ public class PixelPass {
 
         return String(data: extractedData, encoding: .utf8)
     }
+    
+    private func isZlibCompressed(_ data: Data) -> Bool {
+
+        guard data.count >= 2 else {
+            return false
+        }
+
+        let cmf = Int(data[0]) & 0xFF
+        let flg = Int(data[1]) & 0xFF
+
+        let isDeflate = (cmf & 0x0F) == 8
+        let validWindowSize = (cmf >> 4) <= 7
+        let validChecksum = (((cmf << 8) | flg) % 31 == 0)
+
+        return isDeflate && validWindowSize && validChecksum
+    }
 
     public func decode(data: String) -> Data? {
         do {
             let base45DecodedData = try data.fromBase45()
             let compressionType: CompressionType =
-                base45DecodedData.starts(with: Constants.compressionHeader) ? .zlib : .brotli
+                isZlibCompressed(base45DecodedData)
+                    ? .zlib
+                    : .brotli
             let compressor = try CompressionFactory.create(type: compressionType)
             guard let decompressedData = compressor.decompress(base45DecodedData) else {
                 os_log("Error decompressing data",log: OSLog.default,type: OSLogType.error)
