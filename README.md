@@ -9,13 +9,7 @@ PixelPass is a Swift library designed for encoding, decoding, and generating QR 
 - **Zlib & Brotli Compression/Decompression**: Supports both Zlib and Brotli compression for encoding and automatic decompression during decoding.
 - **QR Code Generation**: Create QR codes from strings with customizable error correction levels.
 - Convert CBOR encoded base64Url string to JSON
-
-## iOS Compatibility
-
-- PixelPass Swift library supports iOS 13.0 and above.
-- Inji Wallet currently supports iOS 14.0 and above.
-- Brotli decompression uses the native iOS implementation available on iOS 15.0 and above.
-- Zlib compression/decompression is supported on earlier iOS versions.
+- Brotli compression/decompression is available on iOS 15 and above.
 
 ## Installation
 

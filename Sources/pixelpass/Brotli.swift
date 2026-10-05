@@ -8,8 +8,11 @@ class Brotli: Compression {
             return nil
         }
 
-        var size = Constants.initialBufferSizeMultiplier * data.count
-            + Constants.extraBufferSize
+        var size = min(
+            Constants.initialBufferSizeMultiplier * data.count
+                + Constants.extraBufferSize,
+            Constants.maxDecompressionBufferSize
+        )
 
         while true {
             let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
@@ -33,11 +36,14 @@ class Brotli: Compression {
 
             buffer.deallocate()
 
-            guard size <= Int.max / 2 else {
+            if size >= Constants.maxDecompressionBufferSize {
                 return nil
             }
 
-            size *= 2
+            size = min(
+                size * 2,
+                Constants.maxDecompressionBufferSize
+            )
         }
     }
 
